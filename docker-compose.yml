@@ -6,6 +6,8 @@ services:
     environment:
       - DISPLAY=${DISPLAY}
       - QT_X11_NO_MITSHM=1
+      - MUJOCO_PATH=/opt/mujoco/mujoco210
+      - LD_LIBRARY_PATH=/usr/local/lib:/opt/mujoco/mujoco210/bin:${LD_LIBRARY_PATH}
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - /dev/dri:/dev/dri
@@ -15,10 +17,17 @@ services:
     network_mode: host
     working_dir: /unitree_mujoco/build
     command: ./unitree_mujoco
+    # For debugging, uncomment the following lines:
+    # entrypoint: ["/bin/bash"]
+    # command: -c "while true; do sleep 1; done"
+    # Then you can attach to the container with:
+    # docker-compose exec unitree-mujoco /bin/bash
 
-    # Uncomment for NVIDIA GPU support
+    # Uncomment the following for NVIDIA GPU support:
     # deploy:
     #   resources:
     #     reservations:
     #       devices:
-    #         - capabilities: [gpu]
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [graphics,compute,utility]

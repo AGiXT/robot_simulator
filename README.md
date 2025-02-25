@@ -1,18 +1,16 @@
-# Unitree Streams
+# Unitree Mujoco Integration
 
-Docker container for running Unitree Mujoco simulator with compatibility fixes for Mujoco 2.1.0.
-
-## Overview
-
-This repository contains a Docker setup for running the Unitree Mujoco simulator. It includes patches to fix compatibility issues between the original Unitree Mujoco code (designed for Mujoco 2.0) and Mujoco 2.1.0.
+This project integrates Unitree robots with MuJoCo 2.1.0 physics simulator in a Docker environment.
 
 ## Prerequisites
 
 - Docker
 - Docker Compose
-- X11 server (for GUI support)
+- X11 for visualization
+- Git
+- At least 4GB of free disk space
 
-## Usage
+## Quick Start
 
 1. Clone the repository:
 ```bash
@@ -20,41 +18,115 @@ git clone https://github.com/yourusername/unitree_streams.git
 cd unitree_streams
 ```
 
-2. Build and run the container:
+2. Build the Docker container:
 ```bash
-docker compose up --build
+docker-compose build
 ```
 
-If you have an NVIDIA GPU and want to use it, uncomment the GPU-related lines in `docker-compose.yml`.
-
-## Compatibility Fixes
-
-The patches in the `patches` directory address the following Mujoco 2.1.0 compatibility issues:
-
-- Fixed missing type definitions by ensuring proper header inclusion
-- Updated deprecated type names (e.g., mjvSceneState → mjvScene)
-- Added missing constants that were removed in 2.1.0
-- Updated UI state member access to match the new API
-
-The patches are automatically applied during the Docker build process.
-
-## Development
-
-To modify the patches:
-
-1. Edit files in the `patches/unitree_mujoco/` directory
-2. Rebuild the container:
+3. Run the simulation:
 ```bash
-docker compose up --build
+xhost +local:docker  # Allow X11 connections from Docker
+docker-compose up
 ```
 
 ## Troubleshooting
 
-If you encounter X11 connection issues:
+### Library Issues
+
+If you encounter library-related issues:
+
+1. Run the diagnostic script:
 ```bash
-xhost +local:docker
+# Start container in debug mode
+docker-compose run --rm unitree-mujoco /bin/bash
+
+# Inside container, run diagnostics
+/patches/check_libs.sh
 ```
+
+2. Common issues and solutions:
+
+   a. Missing libraries:
+   ```bash
+   # Check library paths
+   ldconfig -p | grep mujoco
+   ls -l /usr/local/lib/libmujoco*
+   ```
+
+   b. Header file issues:
+   ```bash
+   # Verify header installation
+   ls -l /usr/local/include/mj*.h
+   ls -l /usr/local/include/mujoco/
+   ```
+
+   c. Library load errors:
+   ```bash
+   # Check library dependencies
+   ldd /usr/local/lib/libmujoco210.so
+   ```
+
+### Graphics Issues
+
+1. For NVIDIA GPU support, uncomment the relevant section in docker-compose.yml:
+```yaml
+deploy:
+  resources:
+    reservations:
+      devices:
+        - driver: nvidia
+          count: 1
+          capabilities: [graphics,compute,utility]
+```
+
+2. For Mesa/software rendering issues:
+```bash
+# Inside container
+export LIBGL_ALWAYS_SOFTWARE=1
+```
+
+## Development
+
+### Building from Source
+
+1. Debug build:
+```bash
+docker-compose build --progress=plain
+
+# For verbose output
+docker-compose build --progress=plain --no-cache
+```
+
+2. Modifying source files:
+   - Source files are in `patches/unitree_mujoco/`
+   - Build system files in `patches/`
+   - Changes require container rebuild
+
+### Directory Structure
+
+```
+.
+├── docker-compose.yml   # Container configuration
+├── Dockerfile          # Build instructions
+├── patches/           # Source and build files
+│   ├── apply_patches.sh
+│   ├── check_libs.sh
+│   └── unitree_mujoco/
+│       ├── CMakeLists.txt
+│       ├── main.cc
+│       ├── platform_ui_adapter.cc
+│       ├── simulate.cc
+│       └── simulate.h
+└── README.md
+```
+
+## Notes
+
+- MuJoCo 2.1.0 specific changes:
+  - Uses direct header includes (no mujoco/ prefix)
+  - Links against libmujoco210.so
+  - Modified include order for proper compilation
 
 ## License
 
-This project is licensed under the same terms as the original Unitree Mujoco repository.
+This project is licensed under the Apache 2.0 License - see the LICENSE file for details.

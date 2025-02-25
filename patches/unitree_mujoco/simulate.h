@@ -8,22 +8,13 @@
 
 #pragma once
 
-// Header order matters - mjr.h must come before mjui.h
-#include "mujoco/mjr.h"
-#include "mujoco/mjui.h"
-#include "mujoco/mujoco.h"
+// Include only the top-level MuJoCo header
+extern "C" {
+#include "mujoco.h"
+}
 
 // Forward declarations
 struct GLFWwindow;
-
-// Mujoco 2.1.0 replacements for removed functionality
-#define mjMAXUISECT 10
-#define mjEVENT_NONE 0
-#define mjEVENT_RESIZE 1
-
-// Constants renamed in 2.1.0
-#define mjPRESERVE 0
-#define mjSTATE_INTEGRATION 1
 
 namespace mujoco {
 

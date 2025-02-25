@@ -1,23 +1,42 @@
 cmake_minimum_required(VERSION 3.10)
 project(unitree_mujoco)
 
-# Set verbosity for debugging
+# Set verbosity
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-# Find libraries
+# Find required libraries
 find_package(GLEW REQUIRED)
 find_package(glfw3 REQUIRED)
 
-# Set include directories
-include_directories(${CMAKE_SOURCE_DIR}/src)
-include_directories(/usr/local/include)
-include_directories(/usr/local/include/mujoco)
+# Set directory variables
+set(MUJOCO_DIR "/opt/mujoco/mujoco210")
+set(MUJOCO_INCLUDE_DIRS 
+    "${MUJOCO_DIR}/include"
+    "/usr/local/include"
+    "/usr/local/include/mujoco"
+)
+set(MUJOCO_LIBRARY_DIR "${MUJOCO_DIR}/bin")
 
-# Print debug info
-message(STATUS "Include directories:")
-message(STATUS "  /usr/local/include")
-message(STATUS "  /usr/local/include/mujoco")
-message(STATUS "  ${CMAKE_SOURCE_DIR}/src")
+# Debug print
+message(STATUS "Build configuration:")
+message(STATUS "  MUJOCO_DIR: ${MUJOCO_DIR}")
+message(STATUS "  Include directories:")
+foreach(dir ${MUJOCO_INCLUDE_DIRS})
+    message(STATUS "    ${dir}")
+endforeach()
+message(STATUS "  Library directory: ${MUJOCO_LIBRARY_DIR}")
+
+# Set include directories
+include_directories(
+    ${CMAKE_SOURCE_DIR}/src
+    ${MUJOCO_INCLUDE_DIRS}
+)
+
+# Set library directories
+link_directories(
+    ${MUJOCO_LIBRARY_DIR}
+    /usr/local/lib
+)
 
 # Set source files
 set(SOURCES
@@ -29,18 +48,29 @@ set(SOURCES
 # Create executable
 add_executable(unitree_mujoco ${SOURCES})
 
-# Find Mujoco library with version number
+# Find MuJoCo library
 find_library(MUJOCO_LIB 
     NAMES mujoco210 libmujoco210
-    PATHS /usr/local/lib
+    PATHS ${MUJOCO_LIBRARY_DIR} /usr/local/lib
+    NO_DEFAULT_PATH
 )
+
 if(NOT MUJOCO_LIB)
-    message(FATAL_ERROR "Could not find libmujoco210.so")
+    message(FATAL_ERROR "Could not find MuJoCo library in ${MUJOCO_LIBRARY_DIR} or /usr/local/lib")
 endif()
-message(STATUS "Found Mujoco library: ${MUJOCO_LIB}")
+message(STATUS "Found MuJoCo library: ${MUJOCO_LIB}")
+
+# Configure RPATH
+set_target_properties(unitree_mujoco PROPERTIES
+    INSTALL_RPATH "${MUJOCO_LIBRARY_DIR}:/usr/local/lib"
+    BUILD_WITH_INSTALL_RPATH TRUE
+    SKIP_BUILD_RPATH FALSE
+    BUILD_WITH_INSTALL_NAME_DIR TRUE
+)
 
 # Set link flags
-target_link_libraries(unitree_mujoco PRIVATE
+target_link_libraries(unitree_mujoco
+    PRIVATE
     ${MUJOCO_LIB}
     GLEW::GLEW
     glfw
@@ -57,14 +87,20 @@ target_compile_definitions(unitree_mujoco PRIVATE
     GLEW_STATIC=1
 )
 
-# Set compile options
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(unitree_mujoco PRIVATE -Wall -Wextra)
-endif()
-
-# Print library information
-message(STATUS "Library search paths:")
-get_property(SEARCH_PATHS DIRECTORY PROPERTY LINK_DIRECTORIES)
-foreach(PATH ${SEARCH_PATHS})
-    message(STATUS "  ${PATH}")
+# Verify header existence
+foreach(header mjmodel.h mjdata.h mujoco.h mjrender.h mjui.h mjvisualize.h)
+    set(HEADER_FOUND FALSE)
+    foreach(dir ${MUJOCO_INCLUDE_DIRS})
+        if(EXISTS "${dir}/${header}")
+            message(STATUS "Found ${header} in ${dir}")
+            set(HEADER_FOUND TRUE)
+            break()
+        endif()
+    endforeach()
+    if(NOT HEADER_FOUND)
+        message(WARNING "Could not find ${header} in any include directory")
+    endif()
 endforeach()
+
+# Final status message
+message(STATUS "Configuration complete. Use make VERBOSE=1 for detailed build output")

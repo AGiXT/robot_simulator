@@ -1,7 +1,4 @@
 #include "simulate.h"
-#include "mujoco/mujoco.h"
-#include "mujoco/mjr.h"
-#include "mujoco/mjui.h"
 #include <cstdio>
 #include <cstring>
 
@@ -30,11 +27,11 @@ Simulate::Simulate(mjModel* m, mjData* d) : m_(m), d_(d) {
     cam.azimuth = 90;
     cam.elevation = -20;
 
-    // Initialize visualization options
+    // Initialize visualization options using MuJoCo's flags
     opt.flags[mjVIS_JOINT] = true;
     opt.flags[mjVIS_ACTUATOR] = true;
     opt.flags[mjVIS_COM] = true;
-    opt.flags[mjVIS_CONTACT] = true;
+    opt.flags[mjVIS_CONSTRAINT] = true;
 }
 
 void Simulate::UpdateScene() {

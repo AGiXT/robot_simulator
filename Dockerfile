@@ -38,39 +38,42 @@ RUN set -ex && \
     mkdir -p /opt/mujoco && \
     tar -xvf mujoco.tar.gz -C /opt/mujoco && \
     rm mujoco.tar.gz && \
-    mv /opt/mujoco/mujoco210 /opt/mujoco/mujoco && \
-    echo "Initial Mujoco contents:" && \
-    tree /opt/mujoco/mujoco
+    echo "MuJoCo installation:" && \
+    ls -la /opt/mujoco/mujoco210
 
-# Set up Mujoco environment and copy files
+# Set up MuJoCo environment
+ENV LD_LIBRARY_PATH=/usr/local/lib:/opt/mujoco/mujoco210/bin:$LD_LIBRARY_PATH
+ENV MUJOCO_PATH=/opt/mujoco/mujoco210
+
+# Install MuJoCo headers and libraries
 RUN set -ex && \
-    # Copy include files
+    # Create include directories
     mkdir -p /usr/local/include/mujoco && \
-    cp -rv /opt/mujoco/mujoco/include/* /usr/local/include/mujoco/ && \
-    # Copy libraries
+    # Install headers in both locations
+    cp -v /opt/mujoco/mujoco210/include/* /usr/local/include/ && \
+    cd /usr/local/include && \
+    for f in mj*.h mujoco.h; do \
+        if [ -f "$f" ]; then \
+            ln -sfv "../$f" "mujoco/$f"; \
+        fi \
+    done && \
+    # Install libraries
     mkdir -p /usr/local/lib && \
-    cp -v /opt/mujoco/mujoco/bin/libmujoco210.so /usr/local/lib/ && \
-    cp -v /opt/mujoco/mujoco/bin/libglew.so /usr/local/lib/ && \
-    cp -v /opt/mujoco/mujoco/bin/libglewegl.so /usr/local/lib/ && \
-    cp -v /opt/mujoco/mujoco/bin/libglewosmesa.so /usr/local/lib/ && \
-    cp -v /opt/mujoco/mujoco/bin/libglfw.so.3 /usr/local/lib/ && \
+    cp -v /opt/mujoco/mujoco210/bin/libmujoco210.so /usr/local/lib/ && \
+    cp -v /opt/mujoco/mujoco210/bin/libglew.so /usr/local/lib/ && \
+    cp -v /opt/mujoco/mujoco210/bin/libglewegl.so /usr/local/lib/ && \
     # Create symlinks
-    ln -sf /usr/local/lib/libmujoco210.so /usr/local/lib/libmujoco.so && \
+    ln -sfv /usr/local/lib/libmujoco210.so /usr/local/lib/libmujoco.so && \
+    # Update library cache
     ldconfig && \
+    # Show what we installed
+    echo "Installed headers:" && \
+    ls -la /usr/local/include/mj*.h && \
+    ls -la /usr/local/include/mujoco/ && \
     echo "Installed libraries:" && \
     ls -la /usr/local/lib/lib*
 
-# Set environment variables
-ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-ENV MUJOCO_PATH=/opt/mujoco/mujoco
-
-# Create Mujoco CMake config with correct library name
-RUN mkdir -p /usr/local/lib/cmake/mujoco && \
-    echo 'set(MUJOCO_INCLUDE_DIRS "/usr/local/include")' > /usr/local/lib/cmake/mujoco/mujocoConfig.cmake && \
-    echo 'set(MUJOCO_LIBRARIES "/usr/local/lib/libmujoco210.so")' >> /usr/local/lib/cmake/mujoco/mujocoConfig.cmake && \
-    echo 'include_directories(${MUJOCO_INCLUDE_DIRS})' >> /usr/local/lib/cmake/mujoco/mujocoConfig.cmake
-
-# Copy patches and scripts
+# Copy patches
 COPY patches /patches
 RUN chmod +x /patches/apply_patches.sh /patches/check_libs.sh
 
@@ -86,8 +89,9 @@ RUN git clone https://github.com/unitreerobotics/unitree_mujoco && \
 # Build with verbose output
 WORKDIR /unitree_mujoco
 RUN mkdir -p build && cd build && \
-    cmake .. -DCMAKE_PREFIX_PATH=/usr/local/lib/cmake/mujoco -DCMAKE_VERBOSE_MAKEFILE=ON && \
+    cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON && \
     make VERBOSE=1
 
+# Set working directory and entry point
 WORKDIR /unitree_mujoco/build
 ENTRYPOINT ["./unitree_mujoco"]

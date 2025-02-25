@@ -1,10 +1,16 @@
-#include "mujoco/mujoco.h"
-#include "mujoco/mjr.h"
-#include "mujoco/mjui.h"
-#include "simulate.h"
-#include <GLFW/glfw3.h>
 #include <cstdio>
 #include <string>
+#include <GLFW/glfw3.h>
+
+// Include Mujoco headers in the correct order
+#include "mjmodel.h"  // Must come first as it defines mjtNum
+#include "mjdata.h"
+#include "mujoco.h"
+#include "mjrender.h"
+#include "mjui.h"
+#include "mjvisualize.h"
+
+#include "simulate.h"
 
 // Error callback
 static void error_callback(int error, const char* desc) {
