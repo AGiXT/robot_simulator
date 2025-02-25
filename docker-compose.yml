@@ -1,0 +1,24 @@
+version: '3'
+
+services:
+  unitree-mujoco:
+    build: .
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - /dev/dri:/dev/dri
+    devices:
+      - /dev/dri
+    privileged: true
+    network_mode: host
+    working_dir: /unitree_mujoco/build
+    command: ./unitree_mujoco
+
+    # Uncomment for NVIDIA GPU support
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - capabilities: [gpu]
