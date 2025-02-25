@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mujoco model="go2">
+  <compiler angle="radian"/>
+  <option cone="elliptic" impratio="100"/>
+
+  <default>
+    <default class="go2">
+      <geom friction="0.4" margin="0.001" condim="1"/>
+      <joint axis="0 1 0" damping="0.1" armature="0.01" frictionloss="0.2"/>
+      <motor ctrlrange="-23.7 23.7"/>
+      <default class="abduction">
+        <joint axis="1 0 0" range="-1.0472 1.0472"/>
+      </default>
+      <default class="hip">
+        <default class="front_hip">
+          <joint range="-1.5708 3.4907"/>
+        </default>
+        <default class="back_hip">
+          <joint range="-0.5236 4.5379"/>
+        </default>
+      </default>
+      <default class="knee">
+        <joint range="-2.7227 -0.83776"/>
+        <motor ctrlrange="-45.43 45.43"/>
+      </default>
+    </default>
+  </default>
+
+  <asset>
+    <material name="metal" rgba=".9 .95 .95 1"/>
+    <material name="black" rgba="0 0 0 1"/>
+    <material name="white" rgba="1 1 1 1"/>
+    <material name="gray" rgba="0.671705 0.692426 0.774270 1"/>
+  </asset>
+
+  <worldbody>
+    <body name="base_link" pos="0 0 0.445" childclass="go2">
+      <inertial pos="0.021112 0 -0.005366" quat="-0.000543471 0.713435 -0.00173769 0.700719"
+        mass="6.921" diaginertia="0.107027 0.0980771 0.0244531"/>
+      <freejoint/>
+      <!-- Main body -->
+      <geom type="box" size="0.1881 0.04675 0.057" material="black"/>
+      <site name="imu" pos="-0.02557 0 0.04232"/>
+
+      <!-- Front Left Leg -->
+      <body name="FL_hip" pos="0.1934 0.0465 0">
+        <joint name="FL_hip_joint" class="abduction"/>
+        <geom type="cylinder" size="0.046 0.02" pos="0 0.04 0" quat="0.707 0.707 0 0" material="metal"/>
+        <body name="FL_thigh" pos="0 0.0955 0">
+          <joint name="FL_thigh_joint" class="front_hip"/>
+          <geom type="capsule" size="0.02" fromto="0 0 0 0 0 -0.213" material="gray"/>
+          <body name="FL_calf" pos="0 0 -0.213">
+            <joint name="FL_calf_joint" class="knee"/>
+            <geom type="capsule" size="0.015" fromto="0 0 0 0 0 -0.213" material="black"/>
+            <geom name="FL_foot" type="sphere" size="0.022" pos="0 0 -0.213" material="black"/>
+          </body>
+        </body>
+      </body>
+
+      <!-- Other legs omitted for testing... -->
+    </body>
+  </worldbody>
+
+  <actuator>
+    <motor name="FL_hip" joint="FL_hip_joint"/>
+    <motor name="FL_thigh" joint="FL_thigh_joint"/>
+    <motor name="FL_calf" joint="FL_calf_joint"/>
+  </actuator>
+</mujoco>

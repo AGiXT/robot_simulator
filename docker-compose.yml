@@ -5,18 +5,12 @@ services:
     build: .
     environment:
       - DISPLAY=${DISPLAY}
-      - QT_X11_NO_MITSHM=1
-      - MUJOCO_PATH=/opt/mujoco/mujoco210
-      - LD_LIBRARY_PATH=/usr/local/lib:/opt/mujoco/mujoco210/bin:${LD_LIBRARY_PATH}
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - /dev/dri:/dev/dri
-    devices:
-      - /dev/dri
+      - ./robot_models:/unitree_mujoco/unitree_robots:ro
     privileged: true
-    network_mode: host
     working_dir: /unitree_mujoco/build
-    command: ./unitree_mujoco
+    command: ./unitree_mujoco ../unitree_robots/go2/go2.xml
     # For debugging, uncomment the following lines:
     # entrypoint: ["/bin/bash"]
     # command: -c "while true; do sleep 1; done"
