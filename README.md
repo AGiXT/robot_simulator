@@ -14,8 +14,8 @@ This project integrates Unitree robots with MuJoCo 2.1.0 physics simulator in a 
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/unitree_streams.git
-cd unitree_streams
+git clone (https://github.com/AGiXT/robot_simulator)
+cd robot_simulator
 ```
 
 2. Build the Docker container:
