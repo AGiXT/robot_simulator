@@ -126,7 +126,3 @@ docker-compose build --progress=plain --no-cache
   - Uses direct header includes (no mujoco/ prefix)
   - Links against libmujoco210.so
   - Modified include order for proper compilation
-
-## License
-
-This project is licensed under the Apache 2.0 License - see the LICENSE file for details.
